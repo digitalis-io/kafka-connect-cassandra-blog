@@ -1,0 +1,16 @@
+{
+	"name": "cassandra-cql-sink",
+	"config": {
+		"connector.class": "com.datastax.oss.kafka.sink.CassandraSinkConnector",
+		"tasks.max": "1",
+		"topics": "cql_topic",
+		"contactPoints": "cassandra-server1",
+		"loadBalancing.localDc": "DC1",
+		"topic.cql_topic.connect.cql_table.mapping": "id=now(), username=value.username, firstname=value.firstname, lastname=value.lastname",
+		"topic.cql_topic.connect.cql_table.query": "INSERT INTO connect.cql_table (userid, username, firstname, lastname) VALUES (:id, :username, :firstname, :lastname)",
+		"topic.cql_topic.connect.cql_table.consistencyLevel": "LOCAL_ONE",
+        "topic.cql_topic.connect.cql_table.deletesEnabled": false,
+        "key.converter.schemas.enable": false,
+        "value.converter.schemas.enable": false
+	}
+}

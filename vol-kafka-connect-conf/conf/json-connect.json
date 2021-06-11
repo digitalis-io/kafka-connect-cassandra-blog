@@ -1,0 +1,14 @@
+{
+	"name": "cassandra-json-sink",
+	"config": {
+		"connector.class": "com.datastax.oss.kafka.sink.CassandraSinkConnector",
+		"tasks.max": "1",
+		"topics": "json_topic",
+		"contactPoints": "cassandra-server1",
+		"loadBalancing.localDc": "DC1",
+		"topic.json_topic.connect.json_table.mapping": "userid=key, username=value.username, firstname=value.firstname, lastname=value.lastname",
+		"key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "key.converter.schemas.enable": false,
+        "value.converter.schemas.enable": false
+	}
+}

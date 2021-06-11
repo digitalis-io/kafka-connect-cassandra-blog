@@ -1,0 +1,15 @@
+{
+	"name": "cassandra-basic-sink",
+	"config": {
+		"connector.class": "com.datastax.oss.kafka.sink.CassandraSinkConnector",
+		"tasks.max": "1",
+		"topics": "basic_topic",
+		"contactPoints": "cassandra-server1",
+		"loadBalancing.localDc": "DC1",
+		"topic.basic_topic.connect.basic_table.mapping": "userid=key, username=value",
+		"key.converter": "org.apache.kafka.connect.storage.StringConverter",
+		"value.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "key.converter.schemas.enable": false,
+        "value.converter.schemas.enable": false
+	}
+}
