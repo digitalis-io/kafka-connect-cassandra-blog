@@ -1,0 +1,161 @@
+version: '2'
+
+networks:
+  kafka-net:
+    driver: bridge
+
+services:
+  zookeeper-server:
+    image: 'confluentinc/cp-zookeeper:latest'
+    container_name: 'zookeeper-server'
+    hostname: 'zookeeper-server'
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net
+    ports:
+      - '2181:2181'
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_SERVER_ID=1
+
+  kafka-server1:
+    image: 'confluentinc/cp-kafka:latest'
+    container_name: 'kafka-server1'
+    hostname: 'kafka-server1'
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net    
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-server1:9092
+      - KAFKA_BROKER_ID=1
+    depends_on:
+      - zookeeper-server
+
+  kafka-server2:
+    image: 'confluentinc/cp-kafka:latest'
+    container_name: 'kafka-server2'
+    hostname: 'kafka-server2'
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net    
+    ports:
+      - '9093:9092'
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-server2:9092
+      - KAFKA_BROKER_ID=2
+    depends_on:
+      - zookeeper-server
+
+  kafka-server3:
+    image: 'confluentinc/cp-kafka:latest'
+    container_name: 'kafka-server3'
+    hostname: 'kafka-server3'
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net    
+    ports:
+      - '9094:9092'
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-server3:9092
+      - KAFKA_BROKER_ID=3
+    depends_on:
+      - zookeeper-server
+
+  kafka-sr1:
+    image: 'confluentinc/cp-schema-registry:latest'
+    container_name: 'kafka-sr1'
+    hostname: 'kafka-sr1'
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z kafka-sr1 8081 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net    
+    ports:
+      - '8081:8081'
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka-server1:9092,kafka-server2:9092,kafka-server3:9092
+      - SCHEMA_REGISTRY_HOST_NAME=kafka-sr1
+      - SCHEMA_REGISTRY_LISTENERS=http://kafka-sr1:8081
+    depends_on:
+      - zookeeper-server
+
+  kafka-connect1:
+    image: 'confluentinc/cp-kafka-connect:latest'
+    container_name: 'kafka-connect1'
+    hostname: 'kafka-connect1'
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8082 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net    
+    ports:
+      - '8082:8082'
+    volumes:
+      - ./vol-kafka-connect-jar:/etc/kafka-connect/jars
+      - ./vol-kafka-connect-conf:/etc/kafka-connect/connectors
+    environment:
+      - CONNECT_BOOTSTRAP_SERVERS=kafka-server1:9092,kafka-server2:9092,kafka-server3:9092
+      - CONNECT_REST_PORT=8082
+      - CONNECT_GROUP_ID=cassandraConnect
+      - CONNECT_CONFIG_STORAGE_TOPIC=cassandraconnect-config
+      - CONNECT_OFFSET_STORAGE_TOPIC=cassandraconnect-offset
+      - CONNECT_STATUS_STORAGE_TOPIC=cassandraconnect-status
+      - CONNECT_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_INTERNAL_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_INTERNAL_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE=false
+      - CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE=false
+      - CONNECT_REST_ADVERTISED_HOST_NAME=kafka-connect
+      - CONNECT_PLUGIN_PATH=/etc/kafka-connect/jars
+    depends_on:
+      - zookeeper-server
+      - kafka-server1
+      - kafka-server2
+      - kafka-server3
+  cassandra-server1:
+    image: cassandra:latest
+    mem_limit: 2g
+    container_name: 'cassandra-server1'
+    hostname: 'cassandra-server1'
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    networks:
+      - kafka-net 
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_SEEDS=cassandra-server1
+      - CASSANDRA_CLUSTER_NAME=Digitalis
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=128
