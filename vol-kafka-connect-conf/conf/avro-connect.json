@@ -4,7 +4,7 @@
 		"connector.class": "com.datastax.oss.kafka.sink.CassandraSinkConnector",
 		"tasks.max": "1",
 		"topics": "avro_topic",
-		"contactPoints": "cassandra-server",
+		"contactPoints": "cassandra-server1",
 		"loadBalancing.localDc": "DC1",
 		"topic.avro_topic.connect.avro_table.mapping": "userid=now(), username=value.username, firstname=value.firstname, lastname=value.lastname",
 		"key.converter": "org.apache.kafka.connect.storage.StringConverter",
